@@ -1,85 +1,111 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Milestone Service API",
-    "description": "API for querying milestone progress in professional format",
+    "title": "Milestone Tracking API",
+    "description": "API for querying shipment milestones and tracking information by AWB number",
     "version": "1.0.0",
     "contact": {
       "name": "Service Support",
-      "email": "icil_sup@icil.net"
+      "email": "xx@t.cc"
     }
   },
   "servers": [
     {
-      "url": "http://10.180.3.148:7136",
-      "description": "Development server"
+      "url": "http://xxxx",
+      "description": "T server"
     }
   ],
   "paths": {
     "/milestone/queryMilestonePro": {
       "post": {
-        "summary": "Query milestone progress in professional format",
-        "description": "Retrieve detailed milestone information with enhanced professional formatting and data structure",
+        "summary": "Query shipment milestones by AWB number",
+        "description": "Retrieve detailed milestone information for a shipment by AWB (Air Waybill) number",
         "operationId": "queryMilestonePro",
-        "tags": ["milestone"],
+        "tags": ["milestone", "tracking"],
         "requestBody": {
-          "description": "Query parameters for milestone search",
+          "description": "AWB number to query milestones for",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QueryMilestoneRequest"
+                "type": "object",
+                "properties": {
+                  "awbNo": {
+                    "type": "string",
+                    "description": "Air Waybill number (AWB)",
+                    "example": "UCAN00002752"
+                  }
+                },
+                "required": ["awbNo"]
               },
               "example": {
-                "bookingNo": "BK20230001",
-                "officeCode": "HKG01",
-                "milestoneType": "SHIPMENT_STATUS",
-                "dateFrom": "2023-01-01",
-                "dateTo": "2023-12-31"
+                "awbNo": "UCAN00002752"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Successful operation",
+            "description": "Successful operation - Returns milestone tracking information",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LimosaResponse"
+                  "$ref": "#/components/schemas/MilestoneResponse"
                 },
                 "example": {
                   "code": 200,
                   "message": "Success",
-                  "data": {
-                    "milestones": [
-                      {
-                        "id": "ML001",
-                        "bookingNo": "BK20230001",
-                        "milestoneCode": "BOOKING_CONFIRMED",
-                        "milestoneName": "Booking Confirmed",
-                        "status": "COMPLETED",
-                        "plannedDate": "2023-01-15",
-                        "actualDate": "2023-01-14",
-                        "description": "Booking has been confirmed by carrier",
-                        "office": "HKG01",
-                        "lastUpdated": "2023-01-14T10:30:00Z"
-                      }
-                    ],
-                    "summary": {
-                      "totalMilestones": 8,
-                      "completed": 3,
-                      "inProgress": 2,
-                      "pending": 3,
-                      "delayed": 0
+                  "data": [
+                    {
+                      "totalPieces": 1,
+                      "latestMilestone": "BKD",
+                      "businessService": "AIR",
+                      "latestMilestoneDate": "2026-01-04 14:39:00",
+                      "awb_no": "UCAN00002752",
+                      "milestone": [
+                        {
+                          "bookingNo": "UBK-260104-0000036",
+                          "date1Gmt": "2026-01-04 18:45:00",
+                          "awbGroup": "mawb",
+                          "actionTimeGmt": "2026-01-04 06:39:00",
+                          "ref1": "KE320",
+                          "id": "695a0b0531d84c00073a6cc8",
+                          "businessService": "AIR",
+                          "date2Gmt": "2026-01-04 22:00:00",
+                          "statusDesc": "Booked with Carrier",
+                          "actionBy": "elainechen",
+                          "active": true,
+                          "date2": "2026-01-05 07:00:00",
+                          "date1": "2026-01-05 02:45:00",
+                          "date2Tz": "Asia/Seoul",
+                          "mawb": "180-54973450",
+                          "createdDateGmt": "2026-01-04 06:39:01",
+                          "date1Tz": "PRC",
+                          "actionTimeLoc": "2026-01-04 14:39:00",
+                          "actionTimeTz": "PRC",
+                          "hawb": "",
+                          "place1": "CAN",
+                          "place2": "ICN",
+                          "lastModifiedDateGmt": "2026-01-04 06:39:01",
+                          "tenantId": "UFL",
+                          "dataSource": "system",
+                          "actionPlace": "CAN",
+                          "status": "BKD"
+                        }
+                      ],
+                      "origin": "CAN",
+                      "weight": 127.0,
+                      "latestMilestoneDesc": "Booked with Carrier",
+                      "origin_airport": "CAN",
+                      "dest_airport": "BOS"
                     }
-                  }
+                  ]
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request - Invalid parameters",
+            "description": "Bad request - Invalid AWB number format",
             "content": {
               "application/json": {
                 "schema": {
@@ -87,21 +113,21 @@
                 },
                 "example": {
                   "code": 400,
-                  "message": "Invalid parameters provided"
+                  "message": "Invalid AWB number format"
                 }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Authentication required",
+          "404": {
+            "description": "Not found - AWB number not found in system",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
                 "example": {
-                  "code": 401,
-                  "message": "Authentication required"
+                  "code": 404,
+                  "message": "AWB number not found"
                 }
               }
             }
@@ -126,57 +152,241 @@
   },
   "components": {
     "schemas": {
-      "QueryMilestoneRequest": {
-        "type": "object",
-        "properties": {
-          "bookingNo": {
-            "type": "string",
-            "description": "Booking reference number",
-            "example": "BK20230001"
-          },
-          "officeCode": {
-            "type": "string",
-            "description": "Office location code",
-            "example": "HKG01"
-          },
-          "milestoneType": {
-            "type": "string",
-            "description": "Type of milestone to query",
-            "example": "SHIPMENT_STATUS"
-          },
-          "dateFrom": {
-            "type": "string",
-            "format": "date",
-            "description": "Start date for milestone search",
-            "example": "2023-01-01"
-          },
-          "dateTo": {
-            "type": "string",
-            "format": "date",
-            "description": "End date for milestone search",
-            "example": "2023-12-31"
-          }
-        },
-        "required": ["bookingNo", "officeCode"]
-      },
-      "LimosaResponse": {
+      "MilestoneResponse": {
         "type": "object",
         "properties": {
           "code": {
             "type": "integer",
             "format": "int32",
-            "description": "Response status code"
+            "description": "Response status code",
+            "example": 200
           },
           "message": {
             "type": "string",
-            "description": "Response message"
+            "description": "Response message",
+            "example": "Success"
           },
           "data": {
-            "type": "object",
-            "description": "Response data payload"
+            "type": "array",
+            "description": "Array of shipment milestone data",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentMilestone"
+            }
           }
         },
-        "required": ["code", "message"]
+        "required": ["code", "message", "data"]
+      },
+      "ShipmentMilestone": {
+        "type": "object",
+        "properties": {
+          "totalPieces": {
+            "type": "integer",
+            "description": "Total number of pieces in shipment",
+            "example": 1
+          },
+          "latestMilestone": {
+            "type": "string",
+            "description": "Latest milestone code (e.g., BKD, RCS, PKA)",
+            "example": "BKD"
+          },
+          "businessService": {
+            "type": "string",
+            "description": "Business service type (e.g., AIR, SEA)",
+            "example": "AIR"
+          },
+          "latestMilestoneDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date of latest milestone in local time",
+            "example": "2026-01-04 14:39:00"
+          },
+          "awb_no": {
+            "type": "string",
+            "description": "Air Waybill number",
+            "example": "UCAN00002752"
+          },
+          "milestone": {
+            "type": "array",
+            "description": "Detailed milestone events",
+            "items": {
+              "$ref": "#/components/schemas/MilestoneEvent"
+            }
+          },
+          "origin": {
+            "type": "string",
+            "description": "Origin location code",
+            "example": "CAN"
+          },
+          "weight": {
+            "type": "number",
+            "format": "float",
+            "description": "Shipment weight in kg",
+            "example": 127.0
+          },
+          "latestMilestoneDesc": {
+            "type": "string",
+            "description": "Description of latest milestone",
+            "example": "Booked with Carrier"
+          },
+          "origin_airport": {
+            "type": "string",
+            "description": "Origin airport code",
+            "example": "CAN"
+          },
+          "dest_airport": {
+            "type": "string",
+            "description": "Destination airport code",
+            "example": "BOS"
+          }
+        }
+      },
+      "MilestoneEvent": {
+        "type": "object",
+        "properties": {
+          "bookingNo": {
+            "type": "string",
+            "description": "Booking number",
+            "example": "UBK-260104-0000036"
+          },
+          "date1Gmt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "First date in GMT",
+            "example": "2026-01-04 18:45:00"
+          },
+          "awbGroup": {
+            "type": "string",
+            "description": "AWB group (mawb/hawb)",
+            "example": "mawb"
+          },
+          "actionTimeGmt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Action time in GMT",
+            "example": "2026-01-04 06:39:00"
+          },
+          "ref1": {
+            "type": "string",
+            "description": "Reference 1 (flight number, vessel name, etc.)",
+            "example": "KE320"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for milestone event",
+            "example": "695a0b0531d84c00073a6cc8"
+          },
+          "businessService": {
+            "type": "string",
+            "description": "Business service type",
+            "example": "AIR"
+          },
+          "date2Gmt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Second date in GMT",
+            "example": "2026-01-04 22:00:00"
+          },
+          "statusDesc": {
+            "type": "string",
+            "description": "Status description",
+            "example": "Booked with Carrier"
+          },
+          "actionBy": {
+            "type": "string",
+            "description": "User who performed the action",
+            "example": "elainechen"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the milestone is active",
+            "example": true
+          },
+          "date2": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Second date in local time",
+            "example": "2026-01-05 07:00:00"
+          },
+          "date1": {
+            "type": "string",
+            "format": "date-time",
+            "description": "First date in local time",
+            "example": "2026-01-05 02:45:00"
+          },
+          "date2Tz": {
+            "type": "string",
+            "description": "Timezone for date2",
+            "example": "Asia/Seoul"
+          },
+          "mawb": {
+            "type": "string",
+            "description": "Master Air Waybill number",
+            "example": "180-54973450"
+          },
+          "createdDateGmt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation date in GMT",
+            "example": "2026-01-04 06:39:01"
+          },
+          "date1Tz": {
+            "type": "string",
+            "description": "Timezone for date1",
+            "example": "PRC"
+          },
+          "actionTimeLoc": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Action time in local time",
+            "example": "2026-01-04 14:39:00"
+          },
+          "actionTimeTz": {
+            "type": "string",
+            "description": "Timezone for action time",
+            "example": "PRC"
+          },
+          "hawb": {
+            "type": "string",
+            "description": "House Air Waybill number",
+            "example": "UCAN00002752"
+          },
+          "place1": {
+            "type": "string",
+            "description": "First location code",
+            "example": "CAN"
+          },
+          "place2": {
+            "type": "string",
+            "description": "Second location code",
+            "example": "ICN"
+          },
+          "lastModifiedDateGmt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modified date in GMT",
+            "example": "2026-01-04 06:39:01"
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "Tenant identifier",
+            "example": "UFL"
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Source of the data",
+            "example": "system"
+          },
+          "actionPlace": {
+            "type": "string",
+            "description": "Location where action occurred",
+            "example": "CAN"
+          },
+          "status": {
+            "type": "string",
+            "description": "Milestone status code",
+            "example": "BKD"
+          }
+        }
       },
       "ErrorResponse": {
         "type": "object",
